@@ -1,7 +1,6 @@
 from aiogram import Router
 from aiogram.filters import Command
 import datetime as dt
-import sys
 
 from database import db
 from data.config import *
@@ -99,9 +98,7 @@ async def restart(msg):
     import os
 
     repo = Repo()
-
-    info = repo.remotes.origin.pull()
-
+    repo.remotes.origin.pull()
     await msg.answer('Обновление файлов проведено, перезапуск...')
 
     os.system('systemctl restart pickcatbot')
