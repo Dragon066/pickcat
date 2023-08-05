@@ -94,11 +94,9 @@ async def ping(msg):
 
 @router.message(Command('restart'), flags={'admin': True})
 async def restart(msg):
-    from git import Repo
     import os
 
-    repo = Repo()
-    repo.remotes.origin.pull()
+    os.system('git pull')
     await msg.answer('Обновление файлов проведено, перезапуск...')
 
     os.system('systemctl restart pickcatbot')
