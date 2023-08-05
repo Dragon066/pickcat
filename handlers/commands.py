@@ -95,8 +95,17 @@ async def ping(msg):
 @router.message(Command('restart'), flags={'admin': True})
 async def restart(msg):
     import os
+    import git
 
-    os.system('git pull')
-    await msg.answer('Обновление файлов проведено, перезапуск...')
+    try:
+        await msg.answer('♻️ Обновляю файлы...')
+        repo = git.Repo()
+        current = repo.head.commit
+        repo.remotes.origin.pull()
+        if current != repo.head.commit:
+            await msg.answer('✅ Файлы обновлены')
+    except Exception as ex:
+        await msg.answer(f'❌ При обновлении возникла ошибка: <i>{ex}</i>')
 
+    await msg.answer('Перезапуск...')
     os.system('systemctl restart pickcatbot')
