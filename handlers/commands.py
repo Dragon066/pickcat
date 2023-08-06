@@ -120,3 +120,10 @@ async def restart(msg):
 
     await msg.answer('Перезапуск...')
     os.system('systemctl restart pickcatbot')
+
+
+@router.message(Command('stop'), flags={'admin': True})
+async def stop(msg):
+    import os
+    await msg.answer('Бот экстренно остановлен')
+    os.system('systemctl stop pickcatbot')
