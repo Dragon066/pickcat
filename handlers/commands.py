@@ -103,7 +103,18 @@ async def restart(msg):
         current = repo.head.commit
         repo.remotes.origin.pull()
         if current != repo.head.commit:
-            await msg.answer('✅ Файлы обновлены')
+            list_updates = []
+
+            for commit in repo.iter_commits():
+                if commit == current:
+                    break
+                list_updates.append(commit.message.strip())
+
+            text_updates = '\n• '.join(list_updates)
+
+            text = f'✅ Файлы обновлены\n\n<b>Новые коммиты:</b>\n{text_updates}'
+            await msg.answer(text)
+
     except Exception as ex:
         await msg.answer(f'❌ При обновлении возникла ошибка: <i>{ex}</i>')
 
