@@ -112,7 +112,7 @@ async def restart(msg):
 
             text_updates = '\n• '.join(list_updates)
 
-            text = f'✅ Файлы обновлены\n\n<b>Новые коммиты:</b>\n{text_updates}'
+            text = f'✅ Файлы обновлены\n\n<b>Новые коммиты:</b>\n• {text_updates}'
             await msg.answer(text)
 
     except Exception as ex:
