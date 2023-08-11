@@ -7,6 +7,8 @@ import datetime as dt
 
 from data.config import *
 from handlers import cancel_state, inliner, commands, post
+from database import Database
+from middlewares import DatabaseMiddleware
 
 
 async def main():
@@ -18,6 +20,9 @@ async def main():
     @dp.startup()
     async def on_startup():
         print(f'[{dt.datetime.now().strftime("%d/%b/%y %H:%M:%S")}] Бот запущен за {datetime.now() - STARTUP}')
+        db = Database(HOST, PORT, DATABASE, USER, PASSWORD)
+        await db.create_pool()
+        dp.update.middleware(DatabaseMiddleware(db))
 
     @dp.shutdown()
     async def on_shutdown():

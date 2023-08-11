@@ -1,45 +1,40 @@
 from data.config import *
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import asyncpg
 
 
 class Database():
-    def __new__(cls, *args, **kwargs):
-        if not hasattr(cls, 'instance'):
-            cls.instance = super().__new__(cls)
-        return cls.instance
-
     def __init__(self, host, port, database, user, password):
-        self.connection = psycopg2.connect(
-            host=host,
-            port=port,
-            database=database,
-            user=user,
-            password=password
-        )
+        self.host = host
+        self.port = port
+        self.database = database
+        self.user = user
+        self.password = password
+        self.pool = None
 
-        self.connection.autocommit = True
+    async def create_pool(self):
+        self.pool = await asyncpg.create_pool(host=self.host,
+                                              port=self.port,
+                                              database=self.database,
+                                              user=self.user,
+                                              password=self.password)
 
-        self.cursor = self.connection.cursor(cursor_factory=RealDictCursor)
+    async def select(self, query, vars=tuple()):
+        async with self.pool.acquire() as con:
+            async with con.transaction():
+                result = await con.fetch(query, *vars)
+        return result
 
-    def select(self, query, vars=tuple()):
-        self.cursor.execute(query, vars)
-        res = self.cursor.fetchall()
-        return res
+    async def post(self, query, vars=tuple()):
+        async with self.pool.acquire() as con:
+            async with con.transaction():
+                result = await con.execute(query, *vars)
+        return result
 
-    def post(self, query, vars=tuple()):
-        self.cursor.execute(query, vars)
+    async def close(self):
+        self.pool.terminate()
 
-    def close(self):
-        self.cursor.close()
-        self.connection.close()
-        delattr(Database, 'instance')
-
-    def reconnect(self):
-        self.__init__(HOST, PORT, DATABASE, USER, PASSWORD)
-
-
-db = Database(HOST, PORT, DATABASE, USER, PASSWORD)
+    async def reconnect(self):
+        await self.create_pool()
 
 
 def process_text(text):

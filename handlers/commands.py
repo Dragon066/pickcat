@@ -2,7 +2,6 @@ from aiogram import Router
 from aiogram.filters import Command
 import datetime as dt
 
-from database import db
 from data.config import *
 from middlewares.checkadmin import CheckAdminMiddleware
 
@@ -20,14 +19,14 @@ def get_lexem_picture(n):
 
 
 @router.message(Command('help', 'start'))
-async def info_text(msg):
+async def info_text(msg, db):
     query = '''SELECT count(*) as cnt, max(date) as mx FROM cats_info'''
 
-    res = db.select(query)[0]
+    res = (await db.select(query))[0]
 
     query = '''SELECT count(*) as amount FROM cats_info WHERE now()::date = date::date'''
 
-    res_amount = db.select(query)[0]
+    res_amount = (await db.select(query))[0]
 
     message = f'''<b>🔎 PickCat Bot 🐾</b>
     
@@ -52,18 +51,18 @@ async def info_text(msg):
 
 
 @router.message(Command('ping'))
-async def ping(msg):
+async def ping(msg, db):
     message = '<b>Pong!</b>\n'
     try:
         start = dt.datetime.now()
-        res = db.select('''SELECT 1 as a''')
+        res = await db.select('''SELECT 1 as a''')
         if res[0]["a"] == 1:
             message += f'Ответ <code>work</code>: <b>{round((dt.datetime.now() - start).microseconds / 1000)}ms</b>\n'
         else:
             message += f'Ответ <code>work</code>: <b>-</b>\n'
 
         start = dt.datetime.now()
-        res = db.select('''SELECT * FROM cats_info LIMIT 1''')
+        res = await db.select('''SELECT * FROM cats_info LIMIT 1''')
         if res[0]["id"]:
             message += f'Ответ <code>db_cats</code>: ' \
                        f'<b>{round((dt.datetime.now() - start).microseconds / 1000)}ms</b>\n'
@@ -71,15 +70,15 @@ async def ping(msg):
             message += f'Ответ <code>db_cats</code>: <b>-</b>\n'
 
         query = '''
-        SELECT id, file_id, text, word_similarity(%s, text) as ratio
+        SELECT id, file_id, text, word_similarity($1, text) as ratio
         FROM cats_info ci 
-        WHERE word_similarity(%s, text) > %s
+        WHERE word_similarity($1, text) > $2
         ORDER BY ratio DESC, date DESC
-        OFFSET %s LIMIT %s
+        OFFSET $3 LIMIT $4
         '''
         text = 'кот'
         start = dt.datetime.now()
-        res = db.select(query, [text, text, SIMILARITY, 0, LIMIT])
+        res = await db.select(query, [text, SIMILARITY, 0, LIMIT])
         if len(res) > 0:
             message += f'Ответ <code>inline</code>: <b>{round((dt.datetime.now() - start).microseconds / 1000)}ms</b>'
         else:
@@ -88,7 +87,7 @@ async def ping(msg):
         await msg.answer(message)
     except Exception as ex:
         await msg.answer(f'Возникла ошибка <i>{ex}</i>\nПопытка переподключиться к БД...')
-        db.reconnect()
+        await db.reconnect()
         await msg.answer('Создано новое соединение')
 
 
