@@ -6,7 +6,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 import datetime as dt
 
 from data.config import *
-from handlers import cancel_state, inliner, commands, post
+from handlers import cancel_state, inliner, commands, post, errors
 from database import Database
 from middlewares import DatabaseMiddleware
 
@@ -26,7 +26,7 @@ async def main():
     bot = Bot(token=TOKEN, parse_mode=ParseMode.HTML)
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
-    dp.include_routers(cancel_state.router, inliner.router, commands.router, post.router)
+    dp.include_routers(cancel_state.router, inliner.router, commands.router, post.router, errors.router)
 
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
